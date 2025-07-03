@@ -38,15 +38,15 @@ async def file_handler(client, message: Message):
         user_locks[user_id] = asyncio.Lock()
 
     async with user_locks[user_id]:
-            file = message.document or message.video
-            reply = await message.reply_text("📥 Downloading file...")
-            file_path = await client.download_media(
-                file,
-                progress=progress_bar,
-                progress_args=(reply,)  # ✅ শুধুমাত্র reply পাঠানো হয়েছে
-            )
-            if not file_path:
-                return await reply.edit("❌ Failed to download the file.")
+        file = message.document or message.video
+        reply = await message.reply_text("📥 Downloading file...")
+        file_path = await client.download_media(
+            file,
+            progress=progress_bar,
+            progress_args=(reply,)
+        )
+        if not file_path:
+            return await reply.edit("❌ Failed to download the file.")
 
         mime_type, _ = mimetypes.guess_type(file_path)
         filename = extract_filename(file) or os.path.basename(file_path)
@@ -66,18 +66,9 @@ async def file_handler(client, message: Message):
         await reply.edit("📤 Uploading screenshots...")
         for ss in screenshots:
             await client.send_photo(message.chat.id, ss)
-            # স্ক্রিনশট বা মূল ফাইল কিছুই আর ডিলেট করছিনা
 
         await reply.delete()
         await message.delete()
-
-@app.on_callback_query(filters.regex("checksub"))
-async def refresh_callback(client, cb: CallbackQuery):
-    if await is_subscribed(client, cb.from_user.id):
-        await cb.message.delete()
-        await cb.message.reply_text("✅ Subscription confirmed! Please resend your file.")
-    else:
-        await cb.answer("🚫 You're not subscribed yet. Please join and try again.", show_alert=True)
 
 # --- Koyeb Health Check ---
 async def handle(request):
