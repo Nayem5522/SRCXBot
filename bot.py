@@ -38,11 +38,15 @@ async def file_handler(client, message: Message):
         user_locks[user_id] = asyncio.Lock()
 
     async with user_locks[user_id]:
-        file = message.document or message.video
-        reply = await message.reply_text("📥 Downloading file...")
-        file_path = await client.download_media(file, progress=progress_bar, progress_args=(reply, file.file_size))
-        if not file_path:
-            return await reply.edit("❌ Failed to download the file.")
+            file = message.document or message.video
+            reply = await message.reply_text("📥 Downloading file...")
+            file_path = await client.download_media(
+                file,
+                progress=progress_bar,
+                progress_args=(reply,)  # ✅ শুধুমাত্র reply পাঠানো হয়েছে
+            )
+            if not file_path:
+                return await reply.edit("❌ Failed to download the file.")
 
         mime_type, _ = mimetypes.guess_type(file_path)
         filename = extract_filename(file) or os.path.basename(file_path)
