@@ -1,7 +1,7 @@
 from pyrogram.errors import UserNotParticipant, ChatAdminRequired, ChannelPrivate
 
 # 🔁 Force Subscribe Channel (Set without @)
-FSUB_CHANNEL = "PrimeXBots"
+FSUB_CHANNEL = "PRIMECINEZONE"
 
 async def is_subscribed(client, user_id):
     try:
