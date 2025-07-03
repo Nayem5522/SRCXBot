@@ -73,13 +73,12 @@ async def run_health_server():
     site = web.TCPSite(runner, port=8080)
     await site.start()
 
-# ✅ Run bot and health server together
+# ✅ Run bot and health server together — FIXED
 async def main():
-    await asyncio.gather(
-        app.start(),
-        run_health_server()
-    )
-    await app.idle()
+    await app.start()
+    await run_health_server()
+    print("✅ Bot is running... Health server ready at http://localhost:8080/")
+    await asyncio.Event().wait()  # ⬅️ Proper way to keep it alive
 
 if __name__ == "__main__":
     asyncio.run(main())
