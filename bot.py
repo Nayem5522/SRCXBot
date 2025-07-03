@@ -65,7 +65,12 @@ async def file_handler(client, message: Message):
         "message_id": message.id,
         "status": "pending",
         "created_at": datetime.utcnow(),
-        "file": file,
+        "file_info": {
+            "file_id": file.file_id,
+            "file_name": getattr(file, "file_name", None),
+            "mime_type": file.mime_type,
+            "file_size": file.file_size,
+        },
         "reply_id": reply.id
     })
 
@@ -84,8 +89,6 @@ async def worker():
             chat_id = task["chat_id"]
             message_id = task["message_id"]
             reply_id = task["reply_id"]
-            user_file = task["file"]
-
             message = await app.get_messages(chat_id, message_id)
             reply = await app.get_messages(chat_id, reply_id)
 
@@ -148,5 +151,3 @@ if __name__ == "__main__":
     loop.create_task(run_web())
     loop.create_task(worker())
     app.run()
-
-
