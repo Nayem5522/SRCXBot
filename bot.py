@@ -4,7 +4,9 @@ import mimetypes
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from utils import screenshot_video, screenshot_document, extract_filename, progress_bar
-from force_sub import is_subscribed, FSUB_CHANNEL, get_channel_name
+
+# aiohttp for health check
+from aiohttp import web
 
 api_id = int(os.getenv("API_ID", "12345"))
 api_hash = os.getenv("API_HASH", "your_api_hash")
@@ -15,12 +17,11 @@ user_locks = {}
 
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
-    await message.reply_text("👋 Welcome! Send a video or document and I'll give you 15 screenshots!\n\nJoin our update channel to use this bot.", 
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{FSUB_CHANNEL}")]]))
+    await message.reply_text("👋 Welcome! Send a video or document and I'll give you 15 screenshots!")
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
-    await message.reply_text("❓ Just send a video/document file.\n✅ Ensure you're subscribed to our update channel first.\nI'll generate 15 screenshots!")
+    await message.reply_text("❓ Just send a video or document file.\nI'll generate 15 screenshots for you!")
 
 @app.on_message(filters.document | filters.video)
 async def file_handler(client, message: Message):
@@ -59,13 +60,26 @@ async def file_handler(client, message: Message):
             await message.delete()
         else:
             await reply.edit("❌ Failed to generate screenshots.")
-            
-@app.on_callback_query(filters.regex("checksub"))
-async def refresh_callback(client, cb: CallbackQuery):
-    if await is_subscribed(client, cb.from_user.id):
-        await cb.message.delete()
-        await cb.message.reply_text("✅ Subscription confirmed! Please resend your file.")
-    else:
-        await cb.answer("🚫 You're not subscribed yet. Please join and try again.", show_alert=True)
 
-app.run()
+# ✅ HEALTH CHECK SERVER ON PORT 8080
+async def handle_health(request):
+    return web.Response(text="OK")
+
+async def run_health_server():
+    app = web.Application()
+    app.router.add_get("/", handle_health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, port=8080)
+    await site.start()
+
+# ✅ Run bot and health server together
+async def main():
+    await asyncio.gather(
+        app.start(),
+        run_health_server()
+    )
+    await app.idle()
+
+if __name__ == "__main__":
+    asyncio.run(main())
