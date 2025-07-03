@@ -29,12 +29,6 @@ async def file_handler(client, message: Message):
         user_locks[user_id] = asyncio.Lock()
 
     async with user_locks[user_id]:
-        if not await is_subscribed(client, message.from_user.id):
-            channel_title = await get_channel_name(client)
-            btn = InlineKeyboardMarkup([[InlineKeyboardButton(f"✅ Join {channel_title}", url=f"https://t.me/{FSUB_CHANNEL}"), InlineKeyboardButton("🔁 Refresh", callback_data="checksub")]])
-            await message.reply_text("🔒 You must join the update channel to use this bot.", reply_markup=btn)
-            return
-
         file = message.document or message.video
         reply = await message.reply_text("📥 Downloading file...")
         file_path = await client.download_media(file, progress=progress_bar, progress_args=(reply, file.file_size))
@@ -65,7 +59,7 @@ async def file_handler(client, message: Message):
             await message.delete()
         else:
             await reply.edit("❌ Failed to generate screenshots.")
-
+            
 @app.on_callback_query(filters.regex("checksub"))
 async def refresh_callback(client, cb: CallbackQuery):
     if await is_subscribed(client, cb.from_user.id):
