@@ -1,0 +1,5 @@
+pyrogram
+tgcrypto
+opencv-python
+pymupdf
+numpy<2
