@@ -3,3 +3,4 @@ tgcrypto
 opencv-python
 pymupdf
 numpy<2
+aiohttp
