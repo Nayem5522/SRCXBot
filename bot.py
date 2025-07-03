@@ -39,16 +39,6 @@ async def file_handler(client, message: Message):
 
     async with user_locks[user_id]:
         file = message.document or message.video
-        if not await is_subscribed(client, user_id):
-            channel_title = await get_channel_name(client)
-            return await message.reply_text(
-                f"🚫 You need to join **{channel_title}** to use this bot.",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton(f"✅ Join {channel_title}", url=f"https://t.me/{FSUB_CHANNEL}")],
-                     [InlineKeyboardButton("🔄 I've Joined", callback_data="checksub")]]
-                )
-            )
-
         reply = await message.reply_text("📥 Downloading file...")
         file_path = await client.download_media(file, progress=progress_bar, progress_args=(reply, file.file_size))
         if not file_path:
