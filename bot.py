@@ -6,9 +6,9 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, 
 from utils import screenshot_video, screenshot_document, extract_filename, progress_bar
 from force_sub import is_subscribed, FSUB_CHANNEL, get_channel_name
 
-from aiohttp import web  # Koyeb health check server
+from aiohttp import web  # For Koyeb Health Check
 
-# Bot config
+# Bot credentials from environment variables
 api_id = int(os.getenv("API_ID", "12345"))
 api_hash = os.getenv("API_HASH", "your_api_hash")
 bot_token = os.getenv("BOT_TOKEN", "your_bot_token")
@@ -16,24 +16,21 @@ bot_token = os.getenv("BOT_TOKEN", "your_bot_token")
 app = Client("advanced_screenshot_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 user_locks = {}
 
-# START
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
     await message.reply_text(
-        "👋 Welcome! Send a video or document and I'll generate 15 screenshots!\n\nJoin our update channel to use this bot.",
+        "👋 Welcome! Send a video or document (PDF etc) and I'll generate 15 screenshots!\n\nJoin our update channel to use this bot.",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{FSUB_CHANNEL}")]]
         )
     )
 
-# HELP
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
     await message.reply_text(
-        "❓ Just send a video or PDF/document file.\n✅ Make sure you're subscribed to our channel.\nI'll generate 15 screenshots for you!"
+        "❓ Just send a video or document (PDF, etc).\n✅ Make sure you're subscribed to our channel.\nI'll generate 15 screenshots for you!"
     )
 
-# FILE HANDLER
 @app.on_message(filters.document | filters.video)
 async def file_handler(client, message: Message):
     user_id = message.from_user.id
@@ -75,12 +72,11 @@ async def file_handler(client, message: Message):
         await reply.edit("📤 Uploading screenshots...")
         for ss in screenshots:
             await client.send_photo(message.chat.id, ss)
-            os.remove(ss)  # delete screenshot only
+            # স্ক্রিনশট বা মূল ফাইল কিছুই আর ডিলেট করছিনা
 
         await reply.delete()
-        await message.delete()  # Optional: remove original message
+        await message.delete()
 
-# CALLBACK for checking subscription
 @app.on_callback_query(filters.regex("checksub"))
 async def refresh_callback(client, cb: CallbackQuery):
     if await is_subscribed(client, cb.from_user.id):
@@ -89,7 +85,7 @@ async def refresh_callback(client, cb: CallbackQuery):
     else:
         await cb.answer("🚫 You're not subscribed yet. Please join and try again.", show_alert=True)
 
-# Koyeb Health Check Web Server
+# --- Koyeb Health Check ---
 async def handle(request):
     return web.Response(text="Bot is Alive!")
 
@@ -101,9 +97,9 @@ async def run_web():
     site = web.TCPSite(runner, '0.0.0.0', int(os.environ.get("PORT", 8080)))
     await site.start()
 
-# Start bot and server
+# Final run
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.create_task(run_web())  # Health check server
+    loop.create_task(run_web())
     app.run()
     
