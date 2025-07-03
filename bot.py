@@ -1,7 +1,7 @@
 import os
 import asyncio
 import mimetypes
-from aiohttp import web 
+#from aiohttp import web 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 from utils import screenshot_video, screenshot_document, extract_filename, progress_bar
@@ -77,24 +77,7 @@ async def refresh_callback(client, cb: CallbackQuery):
     else:
         await cb.answer("🚫 You're not subscribed yet. Please join and try again.", show_alert=True)
         
-# ✅ HEALTH CHECK SERVER ON PORT 8080
-async def handle_health(request):
-    return web.Response(text="OK")
 
-async def run_health_server():
-    app = web.Application()
-    app.router.add_get("/", handle_health)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, port=8080)
-    await site.start()
-
-# ✅ Run bot and health server together — FIXED
-async def main():
-    await app.start()
-    await run_health_server()
-    print("✅ Bot is running... Health server ready at http://localhost:8080/")
-    await asyncio.Event().wait()  # ⬅️ Proper way to keep it alive
-
+# Run the bot
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run()
