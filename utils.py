@@ -4,7 +4,7 @@ import fitz  # PyMuPDF
 import time
 
 # ⏯️ VIDEO FILE থেকে স্ক্রিনশট (১৫টি)
-def screenshot_video(path, count=15):
+def screenshot_video(path, count=10):
     screenshots = []
     try:
         vidcap = cv2.VideoCapture(path)
@@ -26,7 +26,7 @@ def screenshot_video(path, count=15):
     return screenshots
 
 # 📄 DOCUMENT FILE (PDF) থেকে স্ক্রিনশট (১৫টি)
-def screenshot_document(path, count=15):
+def screenshot_document(path, count=10):
     screenshots = []
     try:
         doc = fitz.open(path)
@@ -49,15 +49,39 @@ def screenshot_document(path, count=15):
 def extract_filename(file):
     return getattr(file, 'file_name', None) or "unknown_file"
 
+
+# Helper: convert seconds to 1m 5s format
+def format_time(seconds):
+    mins = seconds // 60
+    secs = seconds % 60
+    return f"{mins}m {secs}s" if mins else f"{secs}s"
+
+# Dictionary to track last edit time for each message
+last_edit_time = {}
+
 # 📦 ফাইল ডাউনলোড প্রোগ্রেস বার
 async def progress_bar(current, total, message):
     try:
+        message_id = message.id
+        now = time.time()
+
+        # ⏳ প্রতিটি মেসেজের জন্য ৩ সেকেন্ডে ১ বার আপডেট হবে
+        if message_id in last_edit_time and now - last_edit_time[message_id] < 3:
+            return
+        last_edit_time[message_id] = now
+
+        # Progress calculation
         percent = current * 100 / total
         done = round(percent / 10)
         bar = '▣' * done + '▢' * (10 - done)
+
+        # MB হিসাব
         done_mb = current / 1024**2
         total_mb = total / 1024**2
-        time_passed = round(time.time() % 60)
+
+        # সময় হিসাব (Start time থেকে)
+        elapsed = int(now - message.date.timestamp())
+        time_passed = format_time(elapsed)
 
         text = f"""
 📥 Downloading file...
@@ -65,9 +89,10 @@ async def progress_bar(current, total, message):
 ┣ 🟢 Progress : {percent:.1f}%
 ┣ ✅ Done     : {done_mb:.2f} MB
 ┣ 📁 Total    : {total_mb:.2f} MB
-┣ ⏱️ Time     : {time_passed}s
+┣ ⏱️ Time     : {time_passed}
 ┗━━━━━━━━━━━━━━━━━━━━
 """
-        await message.edit_text(text)
-    except:
-        pass
+        await message.edit_text(text.strip())
+    except Exception as e:
+        print("Progress bar error:", e)
+        
