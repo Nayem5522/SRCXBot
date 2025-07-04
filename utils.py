@@ -4,7 +4,7 @@ import fitz  # PyMuPDF
 import time
 
 # ⏯️ VIDEO FILE থেকে স্ক্রিনশট (১৫টি)
-def screenshot_video(path, count=10):
+def screenshot_video(path, count=15):
     screenshots = []
     try:
         vidcap = cv2.VideoCapture(path)
@@ -26,7 +26,7 @@ def screenshot_video(path, count=10):
     return screenshots
 
 # 📄 DOCUMENT FILE (PDF) থেকে স্ক্রিনশট (১৫টি)
-def screenshot_document(path, count=10):
+def screenshot_document(path, count=15):
     screenshots = []
     try:
         doc = fitz.open(path)
