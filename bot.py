@@ -10,6 +10,7 @@ from utils import screenshot_video, screenshot_document, extract_filename, progr
 from force_sub import is_subscribed, FSUB_CHANNEL, get_channel_name
 from aiohttp import web
 from motor.motor_asyncio import AsyncIOMotorClient
+from pytz import timezone
 from datetime import datetime
 
 id_pattern = re.compile(r'^.\d+$')
@@ -44,6 +45,7 @@ mongo_client = AsyncIOMotorClient(mongo_url)
 db = mongo_client["screenshot_bot"]
 tasks = db["tasks"]
 
+
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
     if AUTH_CHANNEL:
@@ -70,14 +72,33 @@ async def start_handler(client, message: Message):
         except Exception as e:
             print(f"[START ERROR] {e}")
 
-    # ✅ Save user to DB if not already there
+    # ✅ Save user to DB
     await tasks.update_one(
         {"user_id": message.from_user.id},
         {"$setOnInsert": {"user_id": message.from_user.id}},
         upsert=True
     )
 
-    # ✅ Main welcome message
+    # ✅ Send user log to log channel
+    try:
+        bd_time = datetime.now(timezone("Asia/Dhaka")).strftime("%d %B, %Y - %I:%M %p")
+        mention_user = message.from_user.mention if message.from_user.username else message.from_user.first_name
+        log_text = (
+            "<b>📗 New User Joined! SCREENSHOT 🖼️</b>\n\n"
+            f"👤 <b>Name:</b> {message.from_user.first_name}\n"
+            f"🆔 <b>User ID:</b> <code>{message.from_user.id}</code>\n"
+            f"🔗 <b>Mention:</b> {mention_user}\n"
+            f"🕰️ <b>Joined At:</b> {bd_time}"
+        )
+
+        await client.send_message(
+            chat_id=-1002196408894,
+            text=log_text
+        )
+    except Exception as e:
+        print(f"[User Log Error] {e}")
+
+    # ✅ Send welcome message
     await message.reply_photo(
         photo="https://i.postimg.cc/y8h4mNXn/file-0000000088e461f88f1ee0cb5eb1db66.png",
         caption=(
@@ -96,7 +117,7 @@ async def start_handler(client, message: Message):
                 InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem")
             ]
         ])
-)
+    )
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
