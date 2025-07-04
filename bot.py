@@ -133,8 +133,11 @@ async def cancel_callback_handler(client, callback_query):
     await callback_query.answer("✅ Task(s) cancelled.", show_alert=True)
     await callback_query.message.delete()
 
-@app.on_message(filters.command("status") & filters.user(OWNER_ID))
+@app.on_message(filters.command("status"))
 async def status_handler(client, message: Message):
+    if message.from_user.id != OWNER_ID:
+        return await message.reply_text("❌ You are not allowed to use this command! Only the bot owner or admin can access it.")
+
     total_users = await tasks.distinct("user_id")
     pending = await tasks.count_documents({"status": "pending"})
     processing = await tasks.count_documents({"status": "processing"})
@@ -152,11 +155,14 @@ async def status_handler(client, message: Message):
 """
     await message.reply_text(text)
 
-@app.on_message(filters.command("broadcast") & filters.user(OWNER_ID))
+@app.on_message(filters.command("broadcast"))
 async def broadcast_handler(client, message: Message):
+    if message.from_user.id != OWNER_ID:
+        return await message.reply_text("❌ You are not allowed to use this command! Only the bot owner or admin can access it.")
+
     if not message.reply_to_message:
-        return await message.reply_text("Reply to a message to broadcast.")
-    
+        return await message.reply_text("❗ Please reply to a message you want to broadcast.")
+
     msg = message.reply_to_message
     user_ids = await tasks.distinct("user_id")
 
@@ -168,7 +174,7 @@ async def broadcast_handler(client, message: Message):
         except:
             continue
     await message.reply_text(f"✅ Broadcast sent to {sent} users.")
-
+    
 @app.on_message(filters.document | filters.video)
 async def file_handler(client, message: Message):
     if AUTH_CHANNEL:
