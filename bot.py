@@ -77,9 +77,11 @@ async def start_handler(client, message: Message):
     await message.reply_photo(
         photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # আপনার পছন্দের ইমেজ URL দিন
         caption=(
-            "👋 <b>Welcome!</b>\n\n"
-            "📤 Send a <b>video</b> or <b>document (PDF etc)</b> and I'll generate <b>15 screenshots</b>!\n\n"
-            "🔗 Join our <b>support group</b> and <b>updates channel</b> to use this bot."
+            f"👋 Hello {message.from_user.mention},\n\n"
+            "I’m a <b>simple but advanced Video or Document to Screenshot Generator Bot</b>.\n\n"
+            "🎬 I can generate <b>15 preview screenshots</b> from any video, document, or PDF you send me — instantly, from within the content!\n\n"
+            "📥 Just send me a <b>video</b>, <b>PDF</b>, or any <b>document</b> now — and see my power in action!\n\n"
+            "<blockquote>🌿 ᴍᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ <a href='https://t.me/PrimeXBots'>ᴘʀɪᴍᴇXʙᴏᴛꜱ</a></blockquote>"
         ),
         reply_markup=InlineKeyboardMarkup([
             [
