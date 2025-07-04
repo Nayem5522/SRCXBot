@@ -74,8 +74,13 @@ async def start_handler(client, message: Message):
         {"$setOnInsert": {"user_id": message.from_user.id}},
         upsert=True
     )
-    await message.reply_text(
-        "👋 Welcome! Send a video or document (PDF etc) and I'll generate 15 screenshots!\n\nJoin our support group and updates channel to use this bot.",
+    await message.reply_photo(
+        photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # আপনার পছন্দের ইমেজ URL দিন
+        caption=(
+            "👋 <b>Welcome!</b>\n\n"
+            "📤 Send a <b>video</b> or <b>document (PDF etc)</b> and I'll generate <b>15 screenshots</b>!\n\n"
+            "🔗 Join our <b>support group</b> and <b>updates channel</b> to use this bot."
+        ),
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("💬 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ 💬", url="https://t.me/Prime_Support_Group"),
@@ -85,7 +90,7 @@ async def start_handler(client, message: Message):
                 InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem"),
             ]
         ])
-)
+    ) 
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
