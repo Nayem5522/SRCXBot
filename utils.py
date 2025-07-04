@@ -1,5 +1,6 @@
 import os
 import cv2
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import fitz  # PyMuPDF
 import time
 
