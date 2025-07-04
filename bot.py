@@ -51,48 +51,52 @@ async def start_handler(client, message: Message):
             btn = await is_subscribed(client, message, AUTH_CHANNEL)
             if btn:
                 username = (await client.get_me()).username
-                if len(message.command) > 1:
-                    btn.append([InlineKeyboardButton("♻️ ʀᴇғʀᴇsʜ ♻️", url=f"https://t.me/{username}?start={message.command[1]}")])
-                else:
-                    btn.append([InlineKeyboardButton("♻️ ʀᴇғʀᴇsʜ ♻️", url=f"https://t.me/{username}?start=true")])
-
+                param = message.command[1] if len(message.command) > 1 else "true"
+                btn.append([
+                    InlineKeyboardButton("♻️ ʀᴇғʀᴇsʜ ♻️", url=f"https://t.me/{username}?start={param}")
+                ])
+                
                 await message.reply_photo(
-                    photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # Replace with your image link
-                    caption=(  
-                        f"<b>👋 Hello {message.from_user.mention},\n\n"  
-                        "ɪꜰ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴍᴇ, ʏᴏᴜ ᴍᴜꜱᴛ ꜰɪʀꜱᴛ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ. "  
-                        "ᴄʟɪᴄᴋ ᴏɴ \"✇ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ✇\" ʙᴜᴛᴛᴏɴ.ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ \"ʀᴇǫᴜᴇꜱᴛ ᴛᴏ ᴊᴏɪɴ\" ʙᴜᴛᴛᴏɴ. "  
-                        "ᴀꜰᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴏɴ \"ʀᴇғʀᴇsʜ\" ʙᴜᴛᴛᴏɴ.</b>"  
-                    ),  
+                    photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",
+                    caption=(
+                        f"<b>👋 Hello {message.from_user.mention},</b>\n\n"
+                        "ɪꜰ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴍᴇ, ʏᴏᴜ ᴍᴜꜱᴛ ꜰɪʀꜱᴛ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ.\n"
+                        "ᴄʟɪᴄᴋ ᴏɴ \"✇ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ✇\" ʙᴜᴛᴛᴏɴ ᴀɴᴅ ᴛᴀᴘ \"ʀᴇǫᴜᴇꜱᴛ ᴛᴏ ᴊᴏɪɴ\".\n"
+                        "ᴀꜰᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴏɴ \"ʀᴇғʀᴇsʜ\" ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ."
+                    ),
                     reply_markup=InlineKeyboardMarkup(btn)
                 )
                 return
         except Exception as e:
-            print(e)
+            print(f"[START ERROR] {e}")
+
+    # ✅ Save user to DB if not already there
     await tasks.update_one(
         {"user_id": message.from_user.id},
         {"$setOnInsert": {"user_id": message.from_user.id}},
         upsert=True
     )
+
+    # ✅ Main welcome message
     await message.reply_photo(
-        photo="https://i.postimg.cc/y8h4mNXn/file-0000000088e461f88f1ee0cb5eb1db66.png",  # আপনার পছন্দের ইমেজ URL দিন
-        caption = (
+        photo="https://i.postimg.cc/y8h4mNXn/file-0000000088e461f88f1ee0cb5eb1db66.png",
+        caption=(
             f"👋 ʜᴇʏ {message.from_user.mention},\n\n"
             "I’ᴍ ᴀ ʟɪɢʜᴛᴡᴇɪɢʜᴛ ʏᴇᴛ ᴘᴏᴡᴇʀꜰᴜʟ ʙᴏᴛ — ᴅᴇꜱɪɢɴᴇᴅ ᴛᴏ ꜱᴍᴀʀᴛʟʏ ɢᴇɴᴇʀᴀᴛᴇ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ ꜰʀᴏᴍ ᴀɴʏ ᴠɪᴅᴇᴏ, ᴅᴏᴄᴜᴍᴇɴᴛ, ᴏʀ ᴘᴅꜰ.\n\n"
             "🎬 ꜱᴇɴᴅ ᴀɴʏ <b>ᴠɪᴅᴇᴏ</b>, <b>ᴅᴏᴄᴜᴍᴇɴᴛ</b>, ᴏʀ <b>ᴘᴅꜰ</b> — ᴀɴᴅ ɪ'ʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ɢᴇɴᴇʀᴀᴛᴇ <b>15 ᴘʀᴇᴠɪᴇᴡ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ</b> ꜰʀᴏᴍ ɪᴛ!\n\n"
             "📥 ɴᴏ ᴄᴏᴍᴍᴀɴᴅꜱ, ɴᴏ ᴄᴏɴꜰᴜꜱɪᴏɴ — ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴀ ꜰɪʟᴇ ᴀɴᴅ ᴡᴀᴛᴄʜ ᴍᴇ ɪɴ ᴀᴄᴛɪᴏɴ.\n\n"
             "<blockquote>🌿 ᴍᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ: <a href='https://t.me/PrimeXBots'>@ᴘʀɪᴍᴇXʙᴏᴛꜱ</a></blockquote>"
-        )
+        ),
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("💬 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ 💬", url="https://t.me/Prime_Support_Group"),
-                InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ 〄", url="https://t.me/PrimeXBots"),
+                InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ 〄", url="https://t.me/PrimeXBots")
             ],
             [
-                InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem"),
+                InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem")
             ]
         ])
-    ) 
+)
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
