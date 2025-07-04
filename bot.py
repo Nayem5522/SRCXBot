@@ -75,14 +75,14 @@ async def start_handler(client, message: Message):
         upsert=True
     )
     await message.reply_photo(
-        photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # আপনার পছন্দের ইমেজ URL দিন
-        caption=(
-            f"👋 Hello {message.from_user.mention},\n\n"
-            "I’m a <b>simple but advanced Video or Document to Screenshot Generator Bot</b>.\n\n"
-            "🎬 I can generate <b>15 preview screenshots</b> from any video, document, or PDF you send me — instantly, from within the content!\n\n"
-            "📥 Just send me a <b>video</b>, <b>PDF</b>, or any <b>document</b> now — and see my power in action!\n\n"
-            "<blockquote>🌿 ᴍᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ <a href='https://t.me/PrimeXBots'>ᴘʀɪᴍᴇXʙᴏᴛꜱ</a></blockquote>"
-        ),
+        photo="https://i.postimg.cc/y8h4mNXn/file-0000000088e461f88f1ee0cb5eb1db66.png",  # আপনার পছন্দের ইমেজ URL দিন
+        caption = (
+            f"👋 ʜᴇʏ {message.from_user.mention},\n\n"
+            "I’ᴍ ᴀ ʟɪɢʜᴛᴡᴇɪɢʜᴛ ʏᴇᴛ ᴘᴏᴡᴇʀꜰᴜʟ ʙᴏᴛ — ᴅᴇꜱɪɢɴᴇᴅ ᴛᴏ ꜱᴍᴀʀᴛʟʏ ɢᴇɴᴇʀᴀᴛᴇ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ ꜰʀᴏᴍ ᴀɴʏ ᴠɪᴅᴇᴏ, ᴅᴏᴄᴜᴍᴇɴᴛ, ᴏʀ ᴘᴅꜰ.\n\n"
+            "🎬 ꜱᴇɴᴅ ᴀɴʏ <b>ᴠɪᴅᴇᴏ</b>, <b>ᴅᴏᴄᴜᴍᴇɴᴛ</b>, ᴏʀ <b>ᴘᴅꜰ</b> — ᴀɴᴅ ɪ'ʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ɢᴇɴᴇʀᴀᴛᴇ <b>15 ᴘʀᴇᴠɪᴇᴡ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ</b> ꜰʀᴏᴍ ɪᴛ!\n\n"
+            "📥 ɴᴏ ᴄᴏᴍᴍᴀɴᴅꜱ, ɴᴏ ᴄᴏɴꜰᴜꜱɪᴏɴ — ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴀ ꜰɪʟᴇ ᴀɴᴅ ᴡᴀᴛᴄʜ ᴍᴇ ɪɴ ᴀᴄᴛɪᴏɴ.\n\n"
+            "<blockquote>🌿 ᴍᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ: <a href='https://t.me/PrimeXBots'>@ᴘʀɪᴍᴇXʙᴏᴛꜱ</a></blockquote>"
+        )
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("💬 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ 💬", url="https://t.me/Prime_Support_Group"),
@@ -97,7 +97,14 @@ async def start_handler(client, message: Message):
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
     await message.reply_text(
-        "❓ Just send a video or document (PDF, etc).\n✅ Make sure you're subscribed to our channel.\nI'll generate 15 screenshots for you!"
+        "📌 <b>ʜᴏᴡ ᴛᴏ ᴜꜱᴇ ᴍᴇ?</b>\n\n"
+        "📤 ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴀɴʏ <b>ᴠɪᴅᴇᴏ</b>, <b>ᴅᴏᴄᴜᴍᴇɴᴛ</b>, ᴏʀ <b>ᴘᴅꜰ ꜰɪʟᴇ</b>.\n"
+        "🔍 ɪ’ʟʟ ᴀɴᴀʟʏᴢᴇ ɪᴛ ᴀɴᴅ ɢᴇɴᴇʀᴀᴛᴇ <b>15 ʀᴀɴᴅᴏᴍ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ</b> ꜰʀᴏᴍ ᴛʜᴇ ᴄᴏɴᴛᴇɴᴛ.\n"
+        "✅ ᴍᴀᴋᴇ ꜱᴜʀᴇ ʏᴏᴜ’ʀᴇ ꜱᴜʙꜱᴄʀɪʙᴇᴅ ᴛᴏ ᴏᴜʀ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴜꜱᴇ ᴛʜᴇ ꜱᴇʀᴠɪᴄᴇ.\n\n"
+        "💡 ꜰᴇᴇʟ ꜰʀᴇᴇ ᴛᴏ ᴄᴏɴᴛᴀᴄᴛ ᴏᴜʀ ꜱᴜᴘᴘᴏʀᴛ ɪꜰ ʏᴏᴜ ɴᴇᴇᴅ ᴀɴʏ ʜᴇʟᴘ!",
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("💬 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ 💬", url="https://t.me/Prime_Support_Group")]]
+        )
     )
 
 @app.on_message(filters.command("cancel"))
