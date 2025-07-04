@@ -1,13 +1,33 @@
 import os
+import re
+from os import environ
 import asyncio
 import mimetypes
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from pyrogram.errors import *
 from utils import screenshot_video, screenshot_document, extract_filename, progress_bar
 from force_sub import is_subscribed, FSUB_CHANNEL, get_channel_name
 from aiohttp import web
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
+
+id_pattern = re.compile(r'^.\d+$')
+
+AUTH_CHANNEL = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('AUTH_CHANNEL', '-1002245813234').split()] 
+# give channel id with separate space. Ex: ('-10073828 -102782829 -1007282828')
+
+async def is_subscribed(bot, query, channel):
+    btn = []
+    for id in channel:
+        chat = await bot.get_chat(int(id))
+        try:
+            await bot.get_chat_member(id, query.from_user.id)
+        except UserNotParticipant:
+            btn.append([InlineKeyboardButton(f"✇ Join {chat.title} ✇", url=chat.invite_link)]) #✇ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ✇
+        except Exception as e:
+            pass
+    return btn
 
 # Bot credentials from environment variables
 api_id = int(os.getenv("API_ID", "12345"))
@@ -26,13 +46,46 @@ tasks = db["tasks"]
 
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
-    await tasks.update_one({"user_id": message.from_user.id}, {"$setOnInsert": {"user_id": message.from_user.id}}, upsert=True)
-    await message.reply_text(
-        "👋 Welcome! Send a video or document (PDF etc) and I'll generate 15 screenshots!\n\nJoin our update channel to use this bot.",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{FSUB_CHANNEL}")]]
-        )
+    if AUTH_CHANNEL:
+        try:
+            btn = await is_subscribed(client, message, AUTH_CHANNEL)
+            if btn:
+                username = (await client.get_me()).username
+                if len(message.command) > 1:
+                    btn.append([InlineKeyboardButton("♻️ ʀᴇғʀᴇsʜ ♻️", url=f"https://t.me/{username}?start={message.command[1]}")])
+                else:
+                    btn.append([InlineKeyboardButton("♻️ ʀᴇғʀᴇsʜ ♻️", url=f"https://t.me/{username}?start=true")])
+
+                await message.reply_photo(
+                    photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # Replace with your image link
+                    caption=(  
+                        f"<b>👋 Hello {message.from_user.mention},\n\n"  
+                        "ɪꜰ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴍᴇ, ʏᴏᴜ ᴍᴜꜱᴛ ꜰɪʀꜱᴛ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ. "  
+                        "ᴄʟɪᴄᴋ ᴏɴ \"✇ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ✇\" ʙᴜᴛᴛᴏɴ.ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ \"ʀᴇǫᴜᴇꜱᴛ ᴛᴏ ᴊᴏɪɴ\" ʙᴜᴛᴛᴏɴ. "  
+                        "ᴀꜰᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴏɴ \"ʀᴇғʀᴇsʜ\" ʙᴜᴛᴛᴏɴ.</b>"  
+                    ),  
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+                return
+        except Exception as e:
+            print(e)
+    await tasks.update_one(
+        {"user_id": message.from_user.id},
+        {"$setOnInsert": {"user_id": message.from_user.id}},
+        upsert=True
     )
+    await message.reply_text(
+        "👋 Welcome! Send a video or document (PDF etc) and I'll generate 15 screenshots!\n\nJoin our support group and updates channel to use this bot.",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("💬 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ 💬", url="https://t.me/Prime_Support_Group"),
+                InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ 〄", url="https://t.me/PrimeXBots"),
+            ],
+            [
+                InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem"),
+            ]
+        ])
+)
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message: Message):
