@@ -92,7 +92,14 @@ async def progress_bar(current, total, message):
 ┣ ⏱️ Time     : {time_passed}
 ┗━━━━━━━━━━━━━━━━━━━━
 """
-        await message.edit_text(text.strip())
+
+        # ইনলাইন কীবোর্ড
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🚫 Cancel", callback_data="cancel_task")]
+        ])
+
+        await message.edit_text(text.strip(), reply_markup=keyboard)
+
     except Exception as e:
         print("Progress bar error:", e)
         
