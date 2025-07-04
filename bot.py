@@ -198,7 +198,7 @@ async def file_handler(client, message: Message):
 
     file = message.document or message.video
     reply = await message.reply_text(
-        "📥 Queued for processing...",
+        "📥 ǫᴜᴇᴜᴇᴅ ꜰᴏʀ ᴘʀᴏᴄᴇꜱꜱɪɴɢ...\n\n🔄 ᴀᴛ ᴛʜᴇ ᴍᴏᴍᴇɴᴛ, ᴍᴜʟᴛɪᴘʟᴇ ᴜꜱᴇʀꜱ ᴀʀᴇ ꜱᴇɴᴅɪɴɢ ꜰɪʟᴇꜱ ꜰᴏʀ ꜱᴄʀᴇᴇɴꜱʜᴏᴛ ᴘʀᴏᴄᴇꜱꜱɪɴɢ.\n🔄 ᴏɴᴇ ʙʏ ᴏɴᴇ, ᴍᴀɴʏ ꜰɪʟᴇꜱ ᴀʀᴇ ʙᴇɪɴɢ ᴘʀᴏᴄᴇꜱꜱᴇᴅ.\nʏᴏᴜʀ ꜰɪʟᴇ ɪꜱ ɴᴏᴡ ɪɴ ǫᴜᴇᴜᴇ.\n\n⏳ ᴘʟᴇᴀꜱᴇ ʙᴇ ᴘᴀᴛɪᴇɴᴛ — ɴᴏ ᴀᴄᴛɪᴏɴ ɴᴇᴇᴅᴇᴅ ꜰʀᴏᴍ ʏᴏᴜ.\n\n🔐 ᴅᴏɴ'ᴛ ᴡᴏʀʀʏ, ʏᴏᴜʀ ꜰɪʟᴇ ɪꜱ ɪɴ ꜱᴀꜰᴇ ʜᴀɴᴅꜱ.\nɪᴛ ᴡɪʟʟ ʙᴇ ᴘʀᴏᴄᴇꜱꜱᴇᴅ ᴀꜱ ꜱᴏᴏɴ ᴀꜱ ʏᴏᴜʀ ᴛᴜʀɴ ᴄᴏᴍᴇꜱ.\n\n📸 ᴀꜱ ꜱᴏᴏɴ ᴀꜱ ʏᴏᴜʀ ꜱʟᴏᴛ ɪꜱ ʀᴇᴀᴄʜᴇᴅ,\nᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ɢᴇɴᴇʀᴀᴛᴇ ᴀɴᴅ ᴅᴇʟɪᴠᴇʀ ʏᴏᴜʀ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ.\n\n💤 ꜱɪᴛ ʙᴀᴄᴋ, ʀᴇʟᴀx — ᴛʜᴇ ʙᴏᴛ ɪꜱ ᴡᴏʀᴋɪɴɢ ꜰᴏʀ ʏᴏᴜ.",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_task")]]
         )
