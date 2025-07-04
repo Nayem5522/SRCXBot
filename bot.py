@@ -14,6 +14,7 @@ api_id = int(os.getenv("API_ID", "12345"))
 api_hash = os.getenv("API_HASH", "your_api_hash")
 bot_token = os.getenv("BOT_TOKEN", "your_bot_token")
 mongo_url = os.getenv("MONGO_DB_URI", "mongodb://localhost:27017")
+OWNER_ID = int(os.getenv("OWNER_ID", "5926160191"))  # Bot Owner's User ID
 
 # Pyrogram client init
 app = Client("advanced_screenshot_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
@@ -25,6 +26,7 @@ tasks = db["tasks"]
 
 @app.on_message(filters.command("start"))
 async def start_handler(client, message: Message):
+    await tasks.update_one({"user_id": message.from_user.id}, {"$setOnInsert": {"user_id": message.from_user.id}}, upsert=True)
     await message.reply_text(
         "👋 Welcome! Send a video or document (PDF etc) and I'll generate 15 screenshots!\n\nJoin our update channel to use this bot.",
         reply_markup=InlineKeyboardMarkup(
@@ -41,23 +43,78 @@ async def help_handler(client, message: Message):
 @app.on_message(filters.command("cancel"))
 async def cancel_handler(client, message: Message):
     user_id = message.from_user.id
-    result = await tasks.delete_many({"user_id": user_id, "status": "pending"})
-    if result.deleted_count > 0:
-        await message.reply_text(f"❌ {result.deleted_count} pending task(s) cancelled.")
+    result = await tasks.update_many(
+        {"user_id": user_id, "status": {"$in": ["pending", "processing"]}},
+        {"$set": {"status": "cancelled"}}
+    )
+    if result.modified_count > 0:
+        await message.reply_text(f"✅ Cancelled {result.modified_count} task(s).")
     else:
-        await message.reply_text("ℹ️ No pending tasks found to cancel.")
+        await message.reply_text("ℹ️ No active tasks to cancel.")
+
+@app.on_callback_query(filters.regex("cancel_task"))
+async def cancel_callback_handler(client, callback_query):
+    user_id = callback_query.from_user.id
+    result = await tasks.update_many(
+        {"user_id": user_id, "status": {"$in": ["pending", "processing"]}},
+        {"$set": {"status": "cancelled"}}
+    )
+    await callback_query.answer("✅ Task(s) cancelled.", show_alert=True)
+    await callback_query.message.delete()
+
+@app.on_message(filters.command("status") & filters.user(OWNER_ID))
+async def status_handler(client, message: Message):
+    total_users = await tasks.distinct("user_id")
+    pending = await tasks.count_documents({"status": "pending"})
+    processing = await tasks.count_documents({"status": "processing"})
+    done = await tasks.count_documents({"status": "done"})
+    cancelled = await tasks.count_documents({"status": "cancelled"})
+    failed = await tasks.count_documents({"status": "failed"})
+
+    text = f"""📊 **Bot Status**
+👥 Total Users: `{len(total_users)}`
+⏳ Pending: `{pending}`
+⚙️ Processing: `{processing}`
+✅ Done: `{done}`
+❌ Cancelled: `{cancelled}`
+🚫 Failed: `{failed}`
+"""
+    await message.reply_text(text)
+
+@app.on_message(filters.command("broadcast") & filters.user(OWNER_ID))
+async def broadcast_handler(client, message: Message):
+    if not message.reply_to_message:
+        return await message.reply_text("Reply to a message to broadcast.")
+    
+    msg = message.reply_to_message
+    user_ids = await tasks.distinct("user_id")
+
+    sent = 0
+    for uid in user_ids:
+        try:
+            await client.copy_message(uid, msg.chat.id, msg.id)
+            sent += 1
+        except:
+            continue
+    await message.reply_text(f"✅ Broadcast sent to {sent} users.")
 
 @app.on_message(filters.document | filters.video)
 async def file_handler(client, message: Message):
     user_id = message.from_user.id
-    existing_task = await tasks.find_one({"user_id": user_id, "status": {"$in": ["pending", "processing"]}})
+    await tasks.update_one({"user_id": user_id}, {"$setOnInsert": {"user_id": user_id}}, upsert=True)
 
+    existing_task = await tasks.find_one({"user_id": user_id, "status": {"$in": ["pending", "processing"]}})
     if existing_task:
-        await message.reply_text("⚠️ You already have a task in progress. Please wait for it to finish or use /cancel to cancel it.")
+        await message.reply_text("⚠️ You already have a task in progress. Please wait or use /cancel.")
         return
 
     file = message.document or message.video
-    reply = await message.reply_text("📥 Queued for processing...")
+    reply = await message.reply_text(
+        "📥 Queued for processing...",
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_task")]]
+        )
+    )
 
     await tasks.insert_one({
         "user_id": user_id,
@@ -86,6 +143,11 @@ async def worker():
             continue
 
         try:
+            # যদি meantime ইউজার /cancel করে তাহলে status 'cancelled' হয়ে যেতে পারে
+            latest_task = await tasks.find_one({"_id": task["_id"]})
+            if latest_task["status"] == "cancelled":
+                continue
+
             chat_id = task["chat_id"]
             message_id = task["message_id"]
             reply_id = task["reply_id"]
@@ -93,12 +155,7 @@ async def worker():
             reply = await app.get_messages(chat_id, reply_id)
 
             file = message.document or message.video
-            file_path = await app.download_media(
-                file,
-                progress=progress_bar,
-                progress_args=(reply,)
-            )
-
+            file_path = await app.download_media(file, progress=progress_bar, progress_args=(reply,))
             if not file_path:
                 await reply.edit("❌ Failed to download the file.")
                 await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed"}})
@@ -126,7 +183,6 @@ async def worker():
 
             await reply.delete()
             await message.delete()
-
             await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "done"}})
 
         except Exception as e:
@@ -149,5 +205,9 @@ async def run_web():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web())
-    loop.create_task(worker())
+
+    # Run multiple workers for concurrent user processing
+    for _ in range(5):  # Adjust worker count as needed
+        loop.create_task(worker())
+
     app.run()
