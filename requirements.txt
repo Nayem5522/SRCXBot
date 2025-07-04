@@ -5,3 +5,4 @@ pymupdf
 numpy<2
 aiohttp
 motor
+pytz
