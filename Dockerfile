@@ -1,6 +1,12 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y libgl1 libxext6 libxrender1 libsm6 ffmpeg && apt-get clean
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libxext6 \
+    libxrender1 \
+    libsm6 \
+    ffmpeg \
+    && apt-get clean
 
 WORKDIR /app
 COPY . .
