@@ -1,41 +1,50 @@
+#--- START OF FILE bot.py ---
+
 import os
 import re
+import logging
 from os import environ
 import asyncio
 import mimetypes
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from pyrogram.errors import *
+from pyrogram.errors import UserNotParticipant
 from utils import screenshot_video, screenshot_document, extract_filename, progress_bar
-from force_sub import is_subscribed, FSUB_CHANNEL, get_channel_name
 from aiohttp import web
 from motor.motor_asyncio import AsyncIOMotorClient
 from pytz import timezone
 from datetime import datetime
 
+# Configure Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 id_pattern = re.compile(r'^.\d+$')
 
+# Bot configurations from Environment Variables
 AUTH_CHANNEL = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('AUTH_CHANNEL', '-1002245813234').split()] 
-# give channel id with separate space. Ex: ('-10073828 -102782829 -1007282828')
-
-async def is_subscribed(bot, query, channel):
-    btn = []
-    for id in channel:
-        chat = await bot.get_chat(int(id))
-        try:
-            await bot.get_chat_member(id, query.from_user.id)
-        except UserNotParticipant:
-            btn.append([InlineKeyboardButton(f"✇ Join {chat.title} ✇", url=chat.invite_link)]) #✇ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ ✇
-        except Exception as e:
-            pass
-    return btn
-
-# Bot credentials from environment variables
 api_id = int(os.getenv("API_ID", "12345"))
 api_hash = os.getenv("API_HASH", "your_api_hash")
 bot_token = os.getenv("BOT_TOKEN", "your_bot_token")
 mongo_url = os.getenv("MONGO_DB_URI", "mongodb://localhost:27017")
 OWNER_ID = int(os.getenv("OWNER_ID", "5926160191"))  # Bot Owner's User ID
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "-1002196408894")) # Log Channel ID
+
+async def is_subscribed(bot, query, channel):
+    btn = []
+    for id in channel:
+        try:
+            chat = await bot.get_chat(int(id))
+            await bot.get_chat_member(id, query.from_user.id)
+        except UserNotParticipant:
+            btn.append([InlineKeyboardButton(f"✇ Join {chat.title} ✇", url=chat.invite_link)])
+        except Exception as e:
+            logger.error(f"[is_subscribed Error] {e}")
+            pass
+    return btn
 
 # Pyrogram client init
 app = Client("advanced_screenshot_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
@@ -44,6 +53,16 @@ app = Client("advanced_screenshot_bot", api_id=api_id, api_hash=api_hash, bot_to
 mongo_client = AsyncIOMotorClient(mongo_url)
 db = mongo_client["screenshot_bot"]
 tasks = db["tasks"]
+
+async def check_db_connection():
+    """Checks if the MongoDB connection is successful."""
+    try:
+        await db.command('ping')
+        logger.info("✅ MongoDB connection successful.")
+    except Exception as e:
+        logger.error(f"❌ MongoDB connection failed: {e}")
+        # Optionally exit if DB connection is critical
+        # exit(1)
 
 
 @app.on_message(filters.command("start"))
@@ -70,7 +89,7 @@ async def start_handler(client, message: Message):
                 )
                 return
         except Exception as e:
-            print(f"[START ERROR] {e}")
+            logger.error(f"[START ERROR] {e}")
 
     # ✅ Save user to DB
     await tasks.update_one(
@@ -92,13 +111,13 @@ async def start_handler(client, message: Message):
         )
 
         await client.send_message(
-            chat_id=-1002196408894,
+            chat_id=LOG_CHANNEL_ID,
             text=log_text
         )
     except Exception as e:
-        print(f"[User Log Error] {e}")
+        logger.error(f"[User Log Error] {e}")
 
-    # ✅ Send welcome message
+    # ✅ Send welcome message (Original message preserved)
     await message.reply_photo(
         photo="https://i.postimg.cc/y8h4mNXn/file-0000000088e461f88f1ee0cb5eb1db66.png",
         caption=(
@@ -152,7 +171,7 @@ async def cancel_callback_handler(client, callback_query):
         {"$set": {"status": "cancelled"}}
     )
     await callback_query.answer("✅ Task(s) cancelled.", show_alert=True)
-    await callback_query.message.delete()
+    await callback_query.message.edit_text("✅ Task cancelled by user.")
 
 @app.on_message(filters.command("status"))
 async def status_handler(client, message: Message):
@@ -192,7 +211,8 @@ async def broadcast_handler(client, message: Message):
         try:
             await client.copy_message(uid, msg.chat.id, msg.id)
             sent += 1
-        except:
+        except Exception:
+            # User blocked bot, etc.
             continue
     await message.reply_text(f"✅ Broadcast sent to {sent} users.")
     
@@ -203,7 +223,7 @@ async def file_handler(client, message: Message):
             btn = await is_subscribed(client, message, AUTH_CHANNEL)
             if btn:
                 await message.reply_photo(
-                    photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",  # Replace with your image link
+                    photo="https://i.postimg.cc/7Zpf9s1C/IMG-20250514-223544-954.jpg",
                     caption=(
                         f"<b>👋 Hello {message.from_user.mention},\n\n"
                         "ɪꜰ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴍᴇ, ʏᴏᴜ ᴍᴜꜱᴛ ꜰɪʀꜱᴛ ᴊᴏɪɴ ᴏᴜʀ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ.\n"
@@ -214,7 +234,8 @@ async def file_handler(client, message: Message):
                 )
                 return
         except Exception as e:
-            print(e)
+            logger.error(f"[File Handler Auth Error] {e}")
+            
     user_id = message.from_user.id
     await tasks.update_one({"user_id": user_id}, {"$setOnInsert": {"user_id": user_id}}, upsert=True)
 
@@ -224,6 +245,8 @@ async def file_handler(client, message: Message):
         return
 
     file = message.document or message.video
+    
+    # Restored Original Queue Message
     reply = await message.reply_text(
         "📥 ǫᴜᴇᴜᴇᴅ ꜰᴏʀ ᴘʀᴏᴄᴇꜱꜱɪɴɢ...\n\n🔄 ᴀᴛ ᴛʜᴇ ᴍᴏᴍᴇɴᴛ, ᴍᴜʟᴛɪᴘʟᴇ ᴜꜱᴇʀꜱ ᴀʀᴇ ꜱᴇɴᴅɪɴɢ ꜰɪʟᴇꜱ ꜰᴏʀ ꜱᴄʀᴇᴇɴꜱʜᴏᴛ ᴘʀᴏᴄᴇꜱꜱɪɴɢ.\n🔄 ᴏɴᴇ ʙʏ ᴏɴᴇ, ᴍᴀɴʏ ꜰɪʟᴇꜱ ᴀʀᴇ ʙᴇɪɴɢ ᴘʀᴏᴄᴇꜱꜱᴇᴅ.\nʏᴏᴜʀ ꜰɪʟᴇ ɪꜱ ɴᴏᴡ ɪɴ ǫᴜᴇᴜᴇ.\n\n⏳ ᴘʟᴇᴀꜱᴇ ʙᴇ ᴘᴀᴛɪᴇɴᴛ — ɴᴏ ᴀᴄᴛɪᴏɴ ɴᴇᴇᴅᴇᴅ ꜰʀᴏᴍ ʏᴏᴜ.\n\n🔐 ᴅᴏɴ'ᴛ ᴡᴏʀʀʏ, ʏᴏᴜʀ ꜰɪʟᴇ ɪꜱ ɪɴ ꜱᴀꜰᴇ ʜᴀɴᴅꜱ.\nɪᴛ ᴡɪʟʟ ʙᴇ ᴘʀᴏᴄᴇꜱꜱᴇᴅ ᴀꜱ ꜱᴏᴏɴ ᴀꜱ ʏᴏᴜʀ ᴛᴜʀɴ ᴄᴏᴍᴇꜱ.\n\n📸 ᴀꜱ ꜱᴏᴏɴ ᴀꜱ ʏᴏᴜʀ ꜱʟᴏᴛ ɪꜱ ʀᴇᴀᴄʜᴇᴅ,\nᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ɢᴇɴᴇʀᴀᴛᴇ ᴀɴᴅ ᴅᴇʟɪᴠᴇʀ ʏᴏᴜʀ ꜱᴄʀᴇᴇɴꜱʜᴏᴛꜱ.\n\n💤 ꜱɪᴛ ʙᴀᴄᴋ, ʀᴇʟᴀx — ᴛʜᴇ ʙᴏᴛ ɪꜱ ᴡᴏʀᴋɪɴɢ ꜰᴏʀ ʏᴏᴜ.",
         reply_markup=InlineKeyboardMarkup(
@@ -256,24 +279,42 @@ async def worker():
         if not task:
             await asyncio.sleep(2)
             continue
-
+        
+        file_path = None # Initialize file_path for cleanup
+        
         try:
-            # যদি meantime ইউজার /cancel করে তাহলে status 'cancelled' হয়ে যেতে পারে
+            # If the user cancelled the task in the meantime
             latest_task = await tasks.find_one({"_id": task["_id"]})
             if latest_task["status"] == "cancelled":
+                logger.info(f"Task {task['_id']} skipped because it was cancelled.")
                 continue
 
             chat_id = task["chat_id"]
             message_id = task["message_id"]
             reply_id = task["reply_id"]
-            message = await app.get_messages(chat_id, message_id)
-            reply = await app.get_messages(chat_id, reply_id)
+            
+            try:
+                message = await app.get_messages(chat_id, message_id)
+                reply = await app.get_messages(chat_id, reply_id)
+            except Exception as e:
+                logger.warning(f"Message/Reply not found for task {task['_id']}. Error: {e}")
+                await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed", "error": "Message/Reply deleted"}})
+                continue
+
+            # Check for cancellation again right before long-running download
+            latest_task = await tasks.find_one({"_id": task["_id"]})
+            if latest_task["status"] == "cancelled":
+                logger.info(f"Task {task['_id']} cancelled during processing check.")
+                continue
 
             file = message.document or message.video
+            
+            # Download file
             file_path = await app.download_media(file, progress=progress_bar, progress_args=(reply,))
+            
             if not file_path:
-                await reply.edit("❌ Failed to download the file.")
-                await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed"}})
+                await reply.edit_text("❌ Failed to download the file.")
+                await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed", "error": "Download failed"}})
                 continue
 
             mime_type, _ = mimetypes.guess_type(file_path)
@@ -283,26 +324,40 @@ async def worker():
             screenshots = []
             if mime_type:
                 if mime_type.startswith("application/"):
+                    # Assuming screenshot_document handles PDFs and other docs
                     screenshots = await asyncio.get_event_loop().run_in_executor(None, screenshot_document, file_path)
                 elif mime_type.startswith("video/"):
                     screenshots = await asyncio.get_event_loop().run_in_executor(None, screenshot_video, file_path)
 
             if not screenshots:
-                await reply.edit("❌ Could not generate screenshots.")
-                await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed"}})
+                await reply.edit_text("❌ Could not generate screenshots. (File type not supported or corrupted)")
+                await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed", "error": "Screenshot generation failed"}})
                 continue
 
-            await reply.edit("📤 Uploading screenshots...")
+            await reply.edit_text("📤 Uploading screenshots...")
+            
+            # Upload Screenshots
             for ss in screenshots:
                 await app.send_photo(chat_id, ss)
+                os.remove(ss) # Remove generated screenshot file immediately
 
             await reply.delete()
-            await message.delete()
+            # Original message delete is optional, but kept as per your original logic
+            await message.delete() 
             await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "done"}})
 
         except Exception as e:
-            print("Worker Error:", e)
+            logger.error(f"Worker Error for task {task['_id']}: {e}")
             await tasks.update_one({"_id": task["_id"]}, {"$set": {"status": "failed", "error": str(e)}})
+            
+        finally:
+            # CRITICAL: Clean up downloaded source file
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                logger.info(f"Cleaned up source file: {file_path}")
+            
+            # Sleep short if task processed, long if no task found (handled at the beginning of loop)
+
 
 # --- Koyeb Health Check ---
 async def handle(request):
@@ -319,10 +374,17 @@ async def run_web():
 # Final run
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
+    
+    # New: Check DB connection before starting workers
+    loop.run_until_complete(check_db_connection()) 
+    
     loop.create_task(run_web())
 
     # Run multiple workers for concurrent user processing
-    for _ in range(5):  # Adjust worker count as needed
+    for i in range(5):  # Worker count: 5
         loop.create_task(worker())
+        logger.info(f"Worker {i+1} started.")
 
     app.run()
+
+#--- END OF FILE bot.py ---
