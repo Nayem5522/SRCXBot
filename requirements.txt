@@ -1,8 +1,8 @@
 pyrogram
 tgcrypto
 opencv-python
-pymupdf
-numpy<2
+pymongo
+PyMuPDF
 aiohttp
 motor
 pytz
