@@ -29,7 +29,7 @@ AUTH_CHANNEL = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('
 api_id = int(os.getenv("API_ID", "12345"))
 api_hash = os.getenv("API_HASH", "your_api_hash")
 bot_token = os.getenv("BOT_TOKEN", "your_bot_token")
-mongo_url = os.getenv("MONGO_DB_URI", "mongodb://localhost:27017")
+mongo_url = os.getenv("MONGO_DB_URI", "")
 OWNER_ID = int(os.getenv("OWNER_ID", "5926160191"))  # Bot Owner's User ID
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "-1002196408894")) # Log Channel ID
 
