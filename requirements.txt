@@ -1,8 +1,8 @@
-pyrogram
-tgcrypto
-opencv-python
-pymongo
-PyMuPDF
-aiohttp
-motor
-pytz
+pyrogram==2.0.106
+tgcrypto==1.2.5
+opencv-python==4.9.0.80
+pymongo==4.6.1
+motor==3.3.2
+PyMuPDF==1.23.26
+aiohttp==3.9.3
+pytz==2024.1
