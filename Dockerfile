@@ -1,6 +1,5 @@
 FROM python:3.11-slim
 
-# আপনার RUN কমান্ডটি নিম্নরূপ পরিবর্তন করুন:
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libxext6 \
@@ -16,6 +15,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
+# এটি এখন numpy<2.0.0 ইনস্টল করবে
 RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["python", "bot.py"]
